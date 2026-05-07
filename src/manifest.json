@@ -1,16 +1,16 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Container proxy",
   "version": "0.1.22",
   "description": "__MSG_General_extensionDescription__",
   "default_locale": "en",
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
       "id": "contaner-proxy@bekh-ivanov.me",
-      "strict_min_version": "91.1.0"
+      "strict_min_version": "115.0"
     }
   },
-  "browser_action": {
+  "action": {
   },
   "icons": {
     "48": "icon.svg",
@@ -18,17 +18,19 @@
   },
   "options_ui": {
     "page": "options/options.html",
-    "open_in_tab": true,
-    "browser_style": false
+    "open_in_tab": true
   },
 
   "permissions": [
-    "<all_urls>",
     "webRequest",
     "webRequestBlocking",
     "storage",
     "contextualIdentities",
     "proxy"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
   ],
 
   "background": {

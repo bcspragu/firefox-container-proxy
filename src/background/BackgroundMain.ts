@@ -94,7 +94,7 @@ export default class BackgroundMain {
     }
   }
 
-  run (browser: { proxy: any, browserAction: any, runtime: any, webRequest: any }): void {
+  run (browser: { proxy: any, action: any, runtime: any, webRequest: any }): void {
     const filter = { urls: ['<all_urls>'] }
 
     browser.proxy.onRequest.addListener(this.onRequest.bind(this), filter)
@@ -105,7 +105,7 @@ export default class BackgroundMain {
       ['blocking']
     )
 
-    browser.browserAction.onClicked.addListener(this.openPreferences(browser))
+    browser.action.onClicked.addListener(this.openPreferences(browser))
 
     browser.proxy.onError.addListener((e: Error) => {
       console.error('Proxy error', e)
