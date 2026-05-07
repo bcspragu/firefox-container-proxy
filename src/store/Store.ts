@@ -112,21 +112,25 @@ export class Store {
   }
 
   async getProxiesForContainer (cookieStoreId: string): Promise<ProxySettings[]> {
-    const relations = await this.getRelations()
-
+    const fetched = await browser.storage.local.get(['proxies', 'relations']) as {
+      proxies?: Array<Partial<ProxyDao>>
+      relations?: { [key: string]: string[] }
+    }
+    const relations = fetched.relations ?? {}
     const proxyIds: string[] = relations[cookieStoreId] ?? []
 
     if (proxyIds.length === 0) {
       return []
     }
 
-    const proxies = await this.getAllProxies()
-    const proxyById: { [key: string]: ProxySettings } = {}
-    proxies.forEach(function (p) { proxyById[p.id] = p })
+    const proxyById: { [key: string]: ProxyDao } = {}
+    for (const raw of fetched.proxies ?? []) {
+      const dao = fillInDefaults(raw)
+      proxyById[dao.id] = dao
+    }
 
     return proxyIds.map(pId => proxyById[pId])
       .filter(p => p !== undefined)
-      .map(fillInDefaults)
       .map(tryFromDao)
       .filter(p => p !== undefined) as ProxySettings[]
   }
