@@ -28,29 +28,25 @@ export default class BackgroundMain {
     this.store = store
   }
 
-  initializeAuthListener (cookieStoreId: string, proxy: HttpProxySettings | HttpsProxySettings): void {
-    const listener: (details: _OnAuthRequiredDetails) => BlockingResponse = (details) => {
-      if (!details.isProxy) return {}
+  async onAuthRequired (details: _OnAuthRequiredDetails): Promise<BlockingResponse> {
+    if (!details.isProxy) return {}
 
-      if (details.cookieStoreId !== cookieStoreId) return {}
+    const cookieStoreId = details.cookieStoreId ?? ''
+    if (cookieStoreId === '') return {}
 
-      // TODO: Fix in @types/firefox-webext-browser
-      // @ts-expect-error
-      const info = details.proxyInfo
-      if (info.host !== proxy.host || info.port !== proxy.port || info.type !== proxy.type) return {}
+    // TODO: Fix in @types/firefox-webext-browser
+    // @ts-expect-error
+    const info = details.proxyInfo
+    if (info === undefined || info === null) return {}
 
-      const result = { authCredentials: { username: proxy.username, password: proxy.password } }
-
-      browser.webRequest.onAuthRequired.removeListener(listener)
-
-      return result
-    }
-
-    browser.webRequest.onAuthRequired.addListener(
-      listener,
-      { urls: ['<all_urls>'] },
-      ['blocking']
+    const proxies = await this.store.getProxiesForContainer(cookieStoreId)
+    const match = proxies.find((p): p is HttpProxySettings | HttpsProxySettings =>
+      (p.type === ProxyType.Http || p.type === ProxyType.Https) &&
+      p.host === info.host && p.port === info.port && p.type === info.type
     )
+    if (match === undefined) return {}
+
+    return { authCredentials: { username: match.username ?? '', password: match.password ?? '' } }
   }
 
   openPreferences (browser: { runtime: any }) {
@@ -71,12 +67,6 @@ export default class BackgroundMain {
       const proxies = await this.store.getProxiesForContainer(cookieStoreId)
 
       if (proxies.length > 0) {
-        proxies.forEach(p => {
-          if (p.type === ProxyType.Http || p.type === ProxyType.Https) {
-            this.initializeAuthListener(cookieStoreId, p)
-          }
-        })
-
         const result: ProxyInfo[] = proxies.filter((p: ProxySettings) => {
           try {
             const documentUrl = new URL(requestDetails.url)
@@ -99,15 +89,21 @@ export default class BackgroundMain {
 
       return doNotProxy
     } catch (e: unknown) {
-      console.error(`Error in onRequest listener: ${e as string}`)
+      console.error('Error in onRequest listener:', e)
       return [emergencyBreak]
     }
   }
 
-  run (browser: { proxy: any, browserAction: any, runtime: any }): void {
+  run (browser: { proxy: any, browserAction: any, runtime: any, webRequest: any }): void {
     const filter = { urls: ['<all_urls>'] }
 
     browser.proxy.onRequest.addListener(this.onRequest.bind(this), filter)
+
+    browser.webRequest.onAuthRequired.addListener(
+      this.onAuthRequired.bind(this),
+      filter,
+      ['blocking']
+    )
 
     browser.browserAction.onClicked.addListener(this.openPreferences(browser))
 
