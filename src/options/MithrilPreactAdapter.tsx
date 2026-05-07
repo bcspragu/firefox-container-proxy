@@ -2,17 +2,18 @@ import { ComponentType, render } from 'preact'
 import { uuidv4 } from './util'
 import m, { Children, Vnode, VnodeDOM } from 'mithril'
 
-export function MithrilPreactAdapter<P> (Component: ComponentType<P>): m.ComponentTypes<P> {
+export function MithrilPreactAdapter<P extends Record<string, any>> (Component: ComponentType<P>): m.ComponentTypes<P> {
   const uuid = uuidv4()
   const displayName = Component.displayName ?? Component.name ?? 'some-component'
+  const C = Component as any
 
   return class implements m.ClassComponent<P> {
     oncreate (vnode: m.VnodeDOM<P>): any {
-      render(<Component {...vnode.attrs} />, vnode.dom)
+      render(<C {...vnode.attrs} />, vnode.dom)
     }
 
     onupdate (vnode: VnodeDOM<P>): any {
-      render(<Component {...vnode.attrs} />, vnode.dom)
+      render(<C {...vnode.attrs} />, vnode.dom)
     }
 
     view (vnode: Vnode<P>): Children {
