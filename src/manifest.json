@@ -28,7 +28,6 @@
     "webRequestBlocking",
     "storage",
     "contextualIdentities",
-    "cookies",
     "proxy"
   ],
 
