@@ -158,5 +158,13 @@
                 "content": "$1"
             }
         }
+    },
+    "ImportPage_invalidFileError": {
+        "message": "Could not read the selected file. Please ensure it is a valid FoxyProxy settings export.",
+        "description": "Error shown on import page when the selected file cannot be parsed"
+    },
+    "ImportPage_fileTooLargeError": {
+        "message": "The selected file is too large to import.",
+        "description": "Error shown on import page when the selected file exceeds the size limit"
     }
 }

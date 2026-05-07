@@ -8,6 +8,7 @@ const t = browser.i18n.getMessage
 
 export default class ImportPage implements Component {
   proxiesToImport: ProxyDao[] = []
+  importError?: string
   store: Store
 
   cleanUp?: () => void
@@ -24,6 +25,7 @@ export default class ImportPage implements Component {
 
   onChooseFile (event: InputEvent): void {
     this.proxiesToImport = []
+    this.importError = undefined
     const input = event.target as HTMLInputElement
     this.cleanUp = () => {
       input.value = ''
@@ -36,20 +38,31 @@ export default class ImportPage implements Component {
     const file = files[0]
 
     if (file.size > 1000000) {
+      this.importError = t('ImportPage_fileTooLargeError')
+      m.redraw()
       return
     }
     const reader = new FileReader()
     reader.readAsText(file, 'UTF-8')
     reader.onload = (evt) => {
-      // @ts-expect-error
-      const fileContents = evt.target.result as string // TODO: `target` might be null, needs verification
-      const converter = new FoxyProxyConverter()
-      this.proxiesToImport = converter.convert(JSON.parse(fileContents))
-
+      try {
+        const fileContents = evt.target?.result
+        if (typeof fileContents !== 'string') {
+          throw new Error('File could not be read as text')
+        }
+        const converter = new FoxyProxyConverter()
+        this.proxiesToImport = converter.convert(JSON.parse(fileContents))
+      } catch (e) {
+        console.error('Failed to parse import file', e)
+        this.proxiesToImport = []
+        this.importError = t('ImportPage_invalidFileError')
+      }
       m.redraw()
     }
-    reader.onerror = function (evt) {
+    reader.onerror = (evt) => {
       console.error(evt)
+      this.importError = t('ImportPage_invalidFileError')
+      m.redraw()
     }
   }
 
@@ -65,6 +78,7 @@ export default class ImportPage implements Component {
 
   reset (): void {
     this.proxiesToImport = []
+    this.importError = undefined
     if (this.cleanUp !== undefined) {
       this.cleanUp()
     }
@@ -82,6 +96,9 @@ export default class ImportPage implements Component {
       m('h2', t('ImportPage_heading')),
       m('form', [
         m(this.foxyProxyFileInput),
+        this.importError !== undefined
+          ? m('p.error', { role: 'alert' }, this.importError)
+          : null,
         m('button.button.button--primary', {
           disabled: !canImport,
           onclick: async () => {
