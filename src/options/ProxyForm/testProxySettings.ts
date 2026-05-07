@@ -75,25 +75,29 @@ async function fetchProxiedIpData (proxyConfig: SettingsToTest): Promise<IpQuery
     throw new Error('Invalid proxy config')
   }
   return await new Promise((resolve, reject) => {
+    const cleanup = (): void => {
+      browser.proxy.onRequest.removeListener(listener)
+      browser.proxy.onError.removeListener(errorListener)
+    }
+
     const listener = (): ProxyInfo => {
       // TODO Add support for HTTP
-      browser.proxy.onRequest.removeListener(listener)
-
       return proxyInfo
     }
 
     const errorListener = (error: Error): void => {
-      browser.proxy.onRequest.removeListener(listener)
+      cleanup()
       reject(error)
     }
 
     browser.proxy.onRequest.addListener(listener, filter)
     browser.proxy.onError.addListener(errorListener)
 
-    const proxiedResultPromise = fetchIpData(proxiedUrl)
-    proxiedResultPromise.then(r => {
+    fetchIpData(proxiedUrl).then(r => {
+      cleanup()
       resolve(r)
     }).catch(e => {
+      cleanup()
       reject(e)
     })
   })
