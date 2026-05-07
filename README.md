@@ -5,9 +5,27 @@
 
 [Extension page](https://addons.mozilla.org/en-US/firefox/addon/container-proxy/)
 
+## This Fork
+
+This is a fork of https://github.com/bekh6ex/firefox-container-proxy, which I had some LLMs audit to make sure it was savory, then made some basic updates to it (since it hasn't been updated in four years):
+
+- Migrate to Manifest v3
+  - It gets a bad rap in Chrome for watering down ad blocking, but it's fine in Firefox and works here, so...yeah why not.
+- Removed the unused `cookies` permission
+- Tweaked some event listener registration stuff
+- Fix some stuff (Mithril, Node types) to work with modern Node + TypeScript
+- Bump the version
+
+I mostly vibed things, but I reviewed the code, and it's working great for my own personal use. I likely won't publish it on the Firefox store, but you can build it with:
+
+```bash
+pnpm run build && pnpm run bundle
+```
+
+Then install the extension from `web-ext-artifacts/container_proxy-0.1.23.zip`
+
 ## Permissions
 
-  * **cookies**: needed to identify to which container request belongs
   * **webRequest** and  **webRequestBlocking**: to supply credentials for proxy authorization (but not for normal web authorization)
 
 ## Good to know
